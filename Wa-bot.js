@@ -96,20 +96,27 @@ class Group{
  * 
  * dan akan mengembalikan nilai "STOP" jika group dengan groupid yang sama dengan groupid masukan memiliki properti this.timerState fals
  */
-function waitFor(indexGroup) {
+function waitFor(indexGroup, sendOrEnd) {
     
-    let timerState, running, group
+    let timerState, running, group, timerJam, timerMenit
     console.log("masuk ke waitFor")
     const poll = (resolve) => {
         group = JSON.parse(READ(GROUP_PAIR_FILE_PATH))[indexGroup]
         console.log("masuk ke poll")
         timerState = group.timerState
         running = group.running
+        if(sendOrEnd == "send"){
+            timerJam = group.timerJamSend
+            timerMenit = group.timerMenitSend
+        } else if(sendOrEnd == "end"){
+            timerJam = group.timerJamEnd
+            timerMenit = group.timerMenitEnd
+        }
         console.log(`timerState val = ${timerState}`)
         console.log(`running val = ${running}`)
         if(!timerState || !running){
             resolve("STOP")
-        }else if((group.timerJamSend == jamSekarang() && group.timerMenitSend == menitSekarang())){
+        }else if((timerJam == jamSekarang() && timerMenit == menitSekarang())){
             resolve("OK")
         }
         else {
@@ -215,7 +222,7 @@ async function isTimeToSend(indexGroup){
         console.log("masuk isTimeToSend")
         while(group.timerState){
             console.log("masuk while sebelum decision")
-            let decision = await waitFor(indexGroup)
+            let decision = await waitFor(indexGroup, "send")
             groupPair = JSON.parse(READ(GROUP_PAIR_FILE_PATH))
             group = groupPair[indexGroup]
             console.log("setelah nilai decision didapat")
@@ -258,12 +265,65 @@ async function isTimeToSend(indexGroup){
         console.log(err)
     }
 }
+async function isTimeToEnd(indexGroup){
+    try{
+        await sleep(1000)
+        let groupPair = JSON.parse(READ(GROUP_PAIR_FILE_PATH))
+        let group = groupPair[indexGroup]
+        console.log("masuk isTimeToSend")
+        while(group.timerState){
+            console.log("masuk while sebelum decision")
+            let decision = await waitFor(indexGroup, "end")
+            groupPair = JSON.parse(READ(GROUP_PAIR_FILE_PATH))
+            group = groupPair[indexGroup]
+            console.log("setelah nilai decision didapat")
+            if(decision == "OK"){
+                console.log("masuk ke decision OK")
+                // cek pertama kali atau bukan
+                let text //text adalah absen terakhir
+                if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${group.liveAbsenId}`)){
+                    console.log("masuk ke sebelum execute moveTempAbsentoHistory")
+                    let lastAbsenId = moveTempAbsenToHistory(group)
+                    group.lastAbsenId = lastAbsenId
+                    text = fs.readFileSync(`${TEMP_ABSEN_FILE_PATH}${group.liveAbsenId}`)
+                    console.log("setelah execute moveTempAbsentoHistory")
+                    fs.unlinkSync(`${TEMP_ABSEN_FILE_PATH}${group.liveAbsenId}`)
+                }
+
+                //kirim absenn terakhir
+                console.log(`absen = ${text}`)
+                client.sendMessage(
+                    group.idGroup,
+                    text
+                )
+
+                // update absenid
+                group.liveAbsenId = null
+                group.lastSendJam = null
+                group.lastSendMenit = null
+                groupPair[indexGroup] = group
+                WRITE(GROUP_PAIR_FILE_PATH, JSON.stringify(groupPair))
+                await sleep(60000)
+
+            } else if(decision == "STOP"){
+                break
+            }
+            
+        }
+        return
+
+    } catch(err){
+        console.log(err)
+    }
+
+}
 
 // continue timer
 let firstTimeContinueTimerOn = JSON.parse(READ(GROUP_PAIR_FILE_PATH))
 for(let [index, group] of firstTimeContinueTimerOn.entries()){
     if(group.running){
         isTimeToSend(index)
+        isTimeToEnd(index)
     }
 }
 
@@ -275,7 +335,7 @@ client.on("message", msg => {
         let indexOfSpace = msg.body.includes(" ") ? msg.body.indexOf(" ") : msg.body.length
         let [command, arg] = [msg.body.slice(1, indexOfSpace), msg.body.slice(indexOfSpace + 1, msg.body.length)]
         let who
-
+        command = command.toLowerCase()
         if(isFromGroup(msg)){
             // GROUP CHAT SPECIFIC COMMAND
             // command yang membutuhkan pemanggilan objek Group
@@ -415,8 +475,8 @@ jumlah murid terdaftar : ${subjectGroup.muridList.length}
                     
                     break
                 case "sktp":
-                case "sKTP" :
-                case "set-KTP":
+                case "setktp" :
+                case "set-ktp":
                     if(arg.includes("-h")){
                         client.sendMessage(
                             msg.from,
@@ -529,9 +589,50 @@ no absen : ${subjectGroup.muridList[index_murid].noAbsen}
                             )
                         }
                         
-
                     }
                     break
+                case "la":
+                case "liat-absen":
+                    if(arg.includes("-h")){
+
+                    } else{
+                        if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
+                            let text = READ(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
+                            client.sendMessage(
+                                msg.from,
+                                text
+                            )
+
+                        } else {
+                            msg.reply(
+                                "belum ada absen yang diinisialisasi"
+                            )
+                        }
+                    }
+                    break
+                case "liat-last-absen":
+                case "liat-absen-terakhir":
+                case "lla":
+                case "lat":
+                    if(arg.includes("-h")){
+
+                    } else{
+                        if(fs.existsSync(`${HIST_ABSEN_FILE_PATH}${subjectGroup.idGroup}/${subjectGroup.lastAbsenId}`)){
+                            let text = READ(`${HIST_ABSEN_FILE_PATH}${subjectGroup.idGroup}/${subjectGroup.lastAbsenId}`)
+                            client.sendMessage(
+                                msg.from,
+                                text
+                            )
+
+                        } else {
+                            msg.reply(
+                                "belum pernah ada absen atau belum pernah aabsen sama s"
+                            )
+                        }
+                    }
+                    break
+
+
 
                 
             }
@@ -542,6 +643,7 @@ no absen : ${subjectGroup.muridList[index_murid].noAbsen}
             if(subjectGroup.timerState && !subjectGroup.running){
                 subjectGroup.running = true
                 isTimeToSend(indexOfSubjectGroup)
+                isTimeToEnd(indexOfSubjectGroup)
             }
             if(subjectGroup.timerState == false){
                 subjectGroup.running = false
@@ -566,29 +668,3 @@ client.on("group_join", () => {
 
 
 client.initialize();
-
-
-
-
-
-/*
-TO DO
-
-absen remove auto trigger by time done not initiated
-absen create auto trigger by time done so many bug endless sending 
-
-
-
-absen by identifier and by group 50%
-
-fixing fail first register done
-fixing multiple checklist in done
-
-separate absen-pair and group pair done not implemented
-
-add more feature
-
-integrate with g form
-
-
-*/
