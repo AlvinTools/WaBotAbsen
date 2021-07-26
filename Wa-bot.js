@@ -668,29 +668,3 @@ client.on("group_join", () => {
 
 
 client.initialize();
-
-
-
-
-
-/*
-TO DO
-
-absen remove auto trigger by time done not initiated
-absen create auto trigger by time done so many bug endless sending 
-
-
-
-absen by identifier and by group 50%
-
-fixing fail first register done
-fixing multiple checklist in done
-
-separate absen-pair and group pair done not implemented
-
-add more feature
-
-integrate with g form
-
-
-*/
