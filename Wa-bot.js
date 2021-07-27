@@ -13,11 +13,6 @@ const CPREFIX = "!";
 
 let sessiondata;
 
-
-const client = new Client({
-    session: sessiondata
-});
-
 if(fs.existsSync(SESSION_FILE_PATH)){
     console.log("session route")
     sessiondata = require(SESSION_FILE_PATH);
@@ -32,6 +27,11 @@ if(!fs.existsSync("rsc/Absen-folder/History")){
     console.log("masukSinidulu")
     mkdirp.sync("./rsc/Absen-folder/History")
 }
+
+const client = new Client({
+    session: sessiondata
+});
+
 
 client.on("authenticated", (session) => {
     sessiondata = session;
@@ -330,14 +330,14 @@ async function isTimeToEnd(indexGroup){
 // continue timer
 
 let firstTimeContinueTimerOn = fs.existsSync(GROUP_PAIR_FILE_PATH) ? JSON.parse(READ(GROUP_PAIR_FILE_PATH)) : false
-if(firstTimeContinueTimerOn != false)
+if(firstTimeContinueTimerOn != false){
     for(let [index, group] of firstTimeContinueTimerOn.entries()){
         if(group.running){
             isTimeToSend(index)
             isTimeToEnd(index)
         }
     }
-
+}
 
 client.on("message", msg => {
     try{
@@ -396,8 +396,7 @@ client.on("message", msg => {
 => source-code-link
 
 *gunakan flag(tambahkan) -h setelah nama command untuk melihat bantuan
-contoh : !info-group -h
-`
+contoh : !info-group -h`
                     )
                     break
                 // mengirimkan informasi / data yang tersimpan di Group-pair.json untuk group pengirim
@@ -418,8 +417,7 @@ timerEnd        : ${padZero2Digit(subjectGroup.timerJamEnd)}:${padZero2Digit(sub
 statusTimer   : ${subjectGroup.timerState ? "On" : "Off"}
 *jumlah murid terdaftar* : ${subjectGroup.muridList.length}
 
-*yang di bold tidak dapat diganti/set lewat perintah
-`
+*yang di bold tidak dapat diganti/set lewat perintah`
                         )
                     }
                     
@@ -453,8 +451,7 @@ contoh penggunaan:
 !set-property-group timerState True   // set menjadi On
 
 perintah serupa:
-!spg, !set-property-group
-` 
+!spg, !set-property-group` 
                         )
                     } else{
                         let shrc = "subjectGroup"
@@ -485,8 +482,7 @@ namaGroup    : ${subjectGroup.namaGroup}
 timerSend      : ${padZero2Digit(subjectGroup.timerJamSend)}:${padZero2Digit(subjectGroup.timerMenitSend)}
 timerEnd        : ${padZero2Digit(subjectGroup.timerJamEnd)}:${padZero2Digit(subjectGroup.timerMenitEnd)}
 statusTimer   : ${subjectGroup.timerState ? "On" : "Off"}
-jumlah murid terdaftar : ${subjectGroup.muridList.length}
-`
+jumlah murid terdaftar : ${subjectGroup.muridList.length}`
                         )
                         
                     }
@@ -511,8 +507,7 @@ contoh penggunaan:
 *kalau ada absen lewat google form, nantinya akan ada tambahan properti NIS untuk melakukan absensi secara cepat lewat bot
 
 perintah serupa:
-!sktp, !setktp, !set-ktp
-`
+!sktp, !setktp, !set-ktp`
                         )
                     } else {
                         let property = arg.split(" ")[0]
@@ -547,8 +542,7 @@ perintah serupa:
 KTP mu:
 id             : ${subjectGroup.muridList[index_murid].id}
 nama       : ${subjectGroup.muridList[index_murid].nama}
-no absen : ${subjectGroup.muridList[index_murid].noAbsen}
-`
+no absen : ${subjectGroup.muridList[index_murid].noAbsen}`
                             )
                             if(property == "nama"){
                                 subjectGroup.muridList.sort((a,b) => parseFloat(a.noAbsen) - parseFloat(b.noAbsen))
@@ -564,8 +558,7 @@ no absen : ${subjectGroup.muridList[index_murid].noAbsen}
 `!${command} digunakan untuk melakukan absen di absensi yang sedang berlangsun. Jika belum tolong lakukan 
 
 perintah serupa:
-!a, !absen
-`
+!a, !absen`
                         )
                     } else{
                         if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
@@ -623,8 +616,7 @@ perintah serupa:
 `!${command} digunakan untuk melihat absen yang sedang berlangsung. Berguna jika pengguna sudah melakukan absen
 
 perintah serupa:
-!la, !liat-absen
-`
+!la, !liat-absen`
                         )
                     } else{
                         if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
@@ -652,8 +644,7 @@ perintah serupa:
 `!${command} digunakan untuk melihat satu absen yang lalu. 
 
 perintah serupa:
-!liat-absen-terakhir, !lihat-absen-terakhir, !lat, !liat-last-absen, !lihat-last-absen, !lla
-`
+!liat-absen-terakhir, !lihat-absen-terakhir, !lat, !liat-last-absen, !lihat-last-absen, !lla`
                         )
                     } else{
                         if(fs.existsSync(`${HIST_ABSEN_FILE_PATH}${subjectGroup.idGroup}/${subjectGroup.lastAbsenId}`)){
@@ -673,6 +664,8 @@ perintah serupa:
 
                 case "can":
                 case "create-absen-now":
+                case "create-absen":
+                case "ca":
                 case "cta":
                 case "create-temp-absen":
                 case "buat-absen":
@@ -683,8 +676,7 @@ perintah serupa:
 `!${command} digunakan untuk membuat absensi, murid yang membuat ktp setelah absen dikirim tidak akan muncul di absensi hingga absensi selanjutnya
 
 perintah serupa:
-!buat-absen, !buat-absensi, !ba, !create-absen-now, !can, !create-temp-absen, !cta
-`
+!buat-absen, !buat-absensi, !ba, !create-absen, !create-absen-now, !ca, !can, !create-temp-absen, !cta`
                         )
                     } else{
                         let text
@@ -693,16 +685,49 @@ perintah serupa:
                             let lastAbsenId = moveTempAbsenToHistory(subjectGroup)
                             subjectGroup.lastAbsenId = lastAbsenId
                             text = fs.readFileSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
+                            msg.reply(
+                                `absen sebelum ini: \n${text}`
+                            )
                             console.log("setelah execute moveTempAbsentoHistory")
                             fs.unlinkSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
                         }
-                        [text, subjectGroup.liveAbsenid] = createAbsen(subjectGroup)
+                        [text, subjectGroup.liveAbsenId] = createAbsen(subjectGroup)
                         client.sendMessage(
                             msg.from,
                             text
                         )
                     }
                     break
+                case "e":
+                case "ea":
+                case "end-absen":
+                case "end":
+                    if(arg.includes("-h")){
+                        msg.reply(
+`!${command} digunakan untuk mengakhiri absen yang sedang berlangsung
+
+perintah serupa:
+!e, !ea, !end-absen, !end`
+                        )
+                    } else{
+                        if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
+                            console.log("masuk ke sebelum execute moveTempAbsentoHistory")
+                            let lastAbsenId = moveTempAbsenToHistory(subjectGroup)
+                            subjectGroup.lastAbsenId = lastAbsenId
+                            text = fs.readFileSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
+                            msg.reply(
+                                `absen ditutup: \n${text}`
+                            )
+                            console.log("setelah execute moveTempAbsentoHistory")
+                            fs.unlinkSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
+                        } else{
+                            msg.reply(
+                                "beluma ada absensi yang di inisialisasi"
+                            )
+                        }
+                    }
+                    break
+
                 case "lm":
                 case "liat-murid":
                 case "lihat-murid":
@@ -713,8 +738,7 @@ perintah serupa:
 gunakan flag -o untuk menampilkan penuh dalam bentuk JSON
 
 perintah serupa:
-!liat-murid, !lihat-murid, !lm
-`
+!liat-murid, !lihat-murid, !lm`
                         )
                     } else{
                         if(subjectGroup.muridList.length == 0){
