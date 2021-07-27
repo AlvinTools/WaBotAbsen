@@ -369,18 +369,22 @@ client.on("message", msg => {
             }
             switch(command){
                 // sekedar mengirimkan command yang tersedia untuk group
+                case "h":
                 case "help":
                     client.sendMessage(
                         msg.from,
 `command untuk group:
 => info-group
 => set-property-group
-=> set-KTP
+=> set-ktp
 => absen
-=> 
+=> liat-absen
+=> liat-absen-terakhir
+=> buat-absen
+=> liat-murid
 => source-code-link
 
-*tambahkan -h setelah nama command untuk melihat bantuan
+*gunakan flag(tambahkan) -h setelah nama command untuk melihat bantuan
 contoh : !info-group -h
 `
                     )
@@ -416,7 +420,7 @@ statusTimer   : ${subjectGroup.timerState ? "On" : "Off"}
                     if(arg.includes("-h")){
                         client.sendMessage(
                             msg.from,
-`!set-property-group digunakan untuk melakukan sunting properti objek 'Group' di group ini
+`!${command} digunakan untuk melakukan sunting properti objek 'Group' di group ini
 properti yang bisa disunting antaralain:
 
 timerSend     => "<angka>:<angka>" 
@@ -436,6 +440,9 @@ contoh penggunaan:
 !set-property-group namaGroup sebuahNamaGroup
 !set-property-group timerState false  // set menjadi Off
 !set-property-group timerState True   // set menjadi On
+
+perintah serupa:
+!spg, !set-property-group
 ` 
                         )
                     } else{
@@ -461,7 +468,7 @@ contoh penggunaan:
                             
                         }
                         msg.reply(
-                            `properti ${property} telah disunting menjadi ${value}
+`properti ${property} telah disunting menjadi ${value}
 info-group:
 namaGroup    : ${subjectGroup.namaGroup}
 timerSend      : ${padZero2Digit(subjectGroup.timerJamSend)}:${padZero2Digit(subjectGroup.timerMenitSend)}
@@ -480,7 +487,7 @@ jumlah murid terdaftar : ${subjectGroup.muridList.length}
                     if(arg.includes("-h")){
                         client.sendMessage(
                             msg.from,
-`!set-KTP (Kartu Tanda Pelajar) digunakan untuk mendaftar sekaligus menyunting properti objek Murid milik pengirim perintah
+`!${command} (Kartu Tanda Pelajar) digunakan untuk mendaftar sekaligus menyunting properti objek Murid milik pengirim perintah
 properti yang bisa di sunting:
 nama    => "<string>"    menggunakan "", untuk set nama
 noAbsen =>  <number>      untuk set nomor absen
@@ -491,6 +498,9 @@ contoh penggunaan:
 
 *belum bisa langsung sekaligus harus melakukan !set-KTP dua kali
 *kalau ada absen lewat google form, nantinya akan ada tambahan properti NIS untuk melakukan absensi secara cepat lewat bot
+
+perintah serupa:
+!sktp, !setktp, !set-ktp
 `
                         )
                     } else {
@@ -540,7 +550,11 @@ no absen : ${subjectGroup.muridList[index_murid].noAbsen}
                     if(arg.includes("-h")){
                         client.sendMessage(
                             msg.from,
-                            ""
+`!${command} digunakan untuk melakukan absen di absensi yang sedang berlangsun. Jika belum tolong lakukan 
+
+perintah serupa:
+!a, !absen
+`
                         )
                     } else{
                         if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
@@ -594,7 +608,13 @@ no absen : ${subjectGroup.muridList[index_murid].noAbsen}
                 case "la":
                 case "liat-absen":
                     if(arg.includes("-h")){
+                        msg.reply(
+`!${command} digunakan untuk melihat absen yang sedang berlangsung. Berguna jika pengguna sudah melakukan absen
 
+perintah serupa:
+!la, !liat-absen
+`
+                        )
                     } else{
                         if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
                             let text = READ(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
@@ -611,11 +631,19 @@ no absen : ${subjectGroup.muridList[index_murid].noAbsen}
                     }
                     break
                 case "liat-last-absen":
+                case "lihat-last-absen":
                 case "liat-absen-terakhir":
+                case "lihat-absen-terakhir":
                 case "lla":
                 case "lat":
                     if(arg.includes("-h")){
+                        msg.reply(
+`!${command} digunakan untuk melihat satu absen yang lalu. 
 
+perintah serupa:
+!liat-absen-terakhir, !lihat-absen-terakhir, !lat, !liat-last-absen, !lihat-last-absen, !lla
+`
+                        )
                     } else{
                         if(fs.existsSync(`${HIST_ABSEN_FILE_PATH}${subjectGroup.idGroup}/${subjectGroup.lastAbsenId}`)){
                             let text = READ(`${HIST_ABSEN_FILE_PATH}${subjectGroup.idGroup}/${subjectGroup.lastAbsenId}`)
@@ -626,19 +654,89 @@ no absen : ${subjectGroup.muridList[index_murid].noAbsen}
 
                         } else {
                             msg.reply(
-                                "belum pernah ada absen atau belum pernah aabsen sama s"
+                                "belum pernah ada absen atau belum pernah absen sama sekali"
                             )
                         }
                     }
                     break
 
+                case "can":
+                case "create-absen-now":
+                case "cta":
+                case "create-temp-absen":
+                case "buat-absen":
+                case "buat-absensi":
+                case "ba":
+                    if(arg.includes("-h")){
+                        msg.reply(
+`!${command} digunakan untuk membuat absensi, murid yang membuat ktp setelah absen dikirim tidak akan muncul di absensi hingga absensi selanjutnya
+
+perintah serupa:
+!buat-absen, !buat-absensi, !ba, !create-absen-now, !can, !create-temp-absen, !cta
+`
+                        )
+                    } else{
+                        let text
+                        if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
+                            console.log("masuk ke sebelum execute moveTempAbsentoHistory")
+                            let lastAbsenId = moveTempAbsenToHistory(subjectGroup)
+                            subjectGroup.lastAbsenId = lastAbsenId
+                            text = fs.readFileSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
+                            console.log("setelah execute moveTempAbsentoHistory")
+                            fs.unlinkSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
+                        }
+                        [text, subjectGroup.liveAbsenid] = createAbsen(subjectGroup)
+                        client.sendMessage(
+                            msg.from,
+                            text
+                        )
+                    }
+                    break
+                case "lm":
+                case "liat-murid":
+                case "lihat-murid":
+                    if(arg.includes("-h")){
+                        msg.reply(
+`!${command} digunakan untuk melihat list murid yang terdaftar di group dengan !set-ktp
+
+gunakan flag -o untuk menampilkan penuh dalam bentuk JSON
+
+perintah serupa:
+!liat-murid, !lihat-murid, !lm
+`
+                        )
+                    } else{
+                        if(subjectGroup.muridList.length == 0){
+                            client.sendMessage(
+                                msg.from,
+                                "belum ada yang mendaftar"
+                            )
+                            break
+                        }
+
+                        let text = ''
+                        if(arg.includes("-o")){ 
+                            for(let murid of subjectGroup.muridList){
+                                text = text.concat(`${murid}\n`)
+                            }
+
+                        } else{
+                            for(let murid of subjectGroup.muridList){
+                                text = text.concat(`${murid.noAbsen}. ${murid.nama}\n`)
+                            }
+                        }
+                        client.sendMessage(
+                            msg.from,
+                            text
+                        )
+                    }
+
+                default:
 
 
                 
             }
-            console.log(
-                ``
-            )
+            
             // SAVE STATE Group-pair.json
             if(subjectGroup.timerState && !subjectGroup.running){
                 subjectGroup.running = true
