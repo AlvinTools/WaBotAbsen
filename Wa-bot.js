@@ -730,6 +730,12 @@ perintah serupa:
                             text
                         )
                     }
+                    break
+                case "scl":
+                case "source-code-link":
+                    msg.reply(
+                        "https://github.com/Reylyer/WaBotAbsen"
+                    )
 
                 default:
 
