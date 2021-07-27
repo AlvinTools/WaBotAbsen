@@ -737,6 +737,9 @@ perintah serupa:
                         break
 
                     case "lm":
+                    case "llm":
+                    case "liat-list-murid":
+                    case "lihat-list-murid":
                     case "liat-murid":
                     case "lihat-murid":
                         if(arg.includes("-h")){
@@ -746,7 +749,7 @@ perintah serupa:
 gunakan flag -o untuk menampilkan penuh dalam bentuk JSON
 
 perintah serupa:
-!liat-murid, !lihat-murid, !lm`
+!liat-list-murid, !lihat-list-murid, !liat-murid, !lihat-murid, !lm`
                             )
                         } else{
                             if(subjectGroup.muridList.length == 0){
@@ -779,10 +782,42 @@ perintah serupa:
                         msg.reply(
                             "https://github.com/Reylyer/WaBotAbsen"
                         )
+                        break
+                    case "lktp":
+                    case "lk":
+                    case "lihat-ktp":
+                    case "liat-ktp":
+                        if(arg.includes("-h")){
+                            msg.reply(
+`!${command} digunakan untuk melihat ktp anda yang sudah terdaftar di group ini
+
+perintah serupa
+!liat-ktp, !lihat-ktp, !lktp, !lk`
+                            )
+                        } else {
+                            let index_murid, punya_ktp
+                            for(let [index, murid] of subjectGroup.muridList.entries()){
+                                if(murid.id == who){
+                                    punya_ktp = true
+                                    index_murid = index
+                                }
+                            }
+                            if(!punya_ktp){
+                                msg.reply(
+                                    "anda belum punya ktp silahkan gunakan perintah !set-ktp"
+                                )
+                            } else{
+                                msg.reply(
+`KTP mu:
+id             : ${subjectGroup.muridList[index_murid].id}
+nama       : ${subjectGroup.muridList[index_murid].nama}
+no absen : ${subjectGroup.muridList[index_murid].noAbsen}`
+                                )
+                            }
+                            
+                        }
 
                     default:
-
-
                     
                 }
                 
