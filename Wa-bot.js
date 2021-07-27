@@ -1,5 +1,4 @@
 
-const { group } = require("console");
 const fs = require("fs")
 const mkdirp = require("mkdirp")
 const { Client } = require("whatsapp-web.js");
@@ -14,17 +13,25 @@ const CPREFIX = "!";
 
 let sessiondata;
 
+
+const client = new Client({
+    session: sessiondata
+});
+
 if(fs.existsSync(SESSION_FILE_PATH)){
+    console.log("session route")
     sessiondata = require(SESSION_FILE_PATH);
 } else {
+    console.log("qr route")
     client.on("qr", (QR) => {
         console.log("QR RECEIVED", QR);
     });
 }
 
-const client = new Client({
-    session: sessiondata
-});
+if(!fs.existsSync("rsc/Absen-folder/History")){
+    console.log("masukSinidulu")
+    mkdirp.sync("./rsc/Absen-folder/History")
+}
 
 client.on("authenticated", (session) => {
     sessiondata = session;
@@ -35,7 +42,9 @@ client.on("authenticated", (session) => {
     });
 });
 
-
+client.on("auth_failure", msg =>{
+    console.log('\n Event AUTH_FAILURE', new Date())
+})
 
 client.on("ready", () => {
     console.log("Client is ready!");
@@ -319,13 +328,15 @@ async function isTimeToEnd(indexGroup){
 }
 
 // continue timer
-let firstTimeContinueTimerOn = JSON.parse(READ(GROUP_PAIR_FILE_PATH))
-for(let [index, group] of firstTimeContinueTimerOn.entries()){
-    if(group.running){
-        isTimeToSend(index)
-        isTimeToEnd(index)
+
+let firstTimeContinueTimerOn = fs.existsSync(GROUP_PAIR_FILE_PATH) ? JSON.parse(READ(GROUP_PAIR_FILE_PATH)) : false
+if(firstTimeContinueTimerOn != false)
+    for(let [index, group] of firstTimeContinueTimerOn.entries()){
+        if(group.running){
+            isTimeToSend(index)
+            isTimeToEnd(index)
+        }
     }
-}
 
 
 client.on("message", msg => {
