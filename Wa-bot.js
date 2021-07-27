@@ -340,48 +340,50 @@ if(firstTimeContinueTimerOn != false){
 client.on("message", msg => {
     try{
     if (msg.body.charAt(0) === CPREFIX){
+        let commandLines = msg.body.split("\n")
+        for(let commandLine of commandLines){
+            let indexOfSpace = commandLine.includes(" ") ? commandLine.indexOf(" ") : commandLine.length
+            let arg, who
 
-        let indexOfSpace = msg.body.includes(" ") ? msg.body.indexOf(" ") : msg.body.length
-        let [command, arg] = [msg.body.slice(1, indexOfSpace), msg.body.slice(indexOfSpace + 1, msg.body.length)]
-        let who
-        command = command.toLowerCase()
-        if(isFromGroup(msg)){
-            // GROUP CHAT SPECIFIC COMMAND
-            // command yang membutuhkan pemanggilan objek Group
-            who = msg.author
-            
-            // cek apakah sudah ada belum file Group-pair.json. kalau belum buat sebagai list dengan menambahkan 
-            if(!fs.existsSync(GROUP_PAIR_FILE_PATH)){
-                WRITE(GROUP_PAIR_FILE_PATH, JSON.stringify([]))
-            }
-
-            // mencari groupid dari Group-pair.json, asal pesan group akan disimpan dalam variable subjectGroup
-            // kalau tidak ada di Group-pair.json akan ditambahkan objek Group dengan nilai properti semua null
-            // kecuali this.groupid yang akan diisi dengan msg.from
-            let subjectGroup
-            let groupPair = JSON.parse(READ(GROUP_PAIR_FILE_PATH))
-            let adaGroup = false
-            let indexOfSubjectGroup
-            for(let [index, group] of groupPair.entries()){
-                console.log(JSON.stringify(group))
-                if(group.idGroup == msg.from){
-                    subjectGroup = group
-                    indexOfSubjectGroup = index
-                    adaGroup = true
-                    break
+            [command, arg] = [commandLine.slice(1, indexOfSpace), commandLine.slice(indexOfSpace + 1, commandLine.length)]
+            command = command.toLowerCase()
+            if(isFromGroup(msg)){
+                // GROUP CHAT SPECIFIC COMMAND
+                // command yang membutuhkan pemanggilan objek Group
+                who = msg.author
+                
+                // cek apakah sudah ada belum file Group-pair.json. kalau belum buat sebagai list dengan menambahkan 
+                if(!fs.existsSync(GROUP_PAIR_FILE_PATH)){
+                    WRITE(GROUP_PAIR_FILE_PATH, JSON.stringify([]))
                 }
-            } // kalau ga ada di Group-pair.json kita buat objek baru
-            if(!adaGroup){
-                let newGroup = new Group(msg.from)
-                subjectGroup = newGroup
-                indexOfSubjectGroup = groupPair.length
-            }
-            switch(command){
-                // sekedar mengirimkan command yang tersedia untuk group
-                case "h":
-                case "help":
-                    client.sendMessage(
-                        msg.from,
+
+                // mencari groupid dari Group-pair.json, asal pesan group akan disimpan dalam variable subjectGroup
+                // kalau tidak ada di Group-pair.json akan ditambahkan objek Group dengan nilai properti semua null
+                // kecuali this.groupid yang akan diisi dengan msg.from
+                let subjectGroup
+                let groupPair = JSON.parse(READ(GROUP_PAIR_FILE_PATH))
+                let adaGroup = false
+                let indexOfSubjectGroup
+                for(let [index, group] of groupPair.entries()){
+                    console.log(JSON.stringify(group))
+                    if(group.idGroup == msg.from){
+                        subjectGroup = group
+                        indexOfSubjectGroup = index
+                        adaGroup = true
+                        break
+                    }
+                } // kalau ga ada di Group-pair.json kita buat objek baru
+                if(!adaGroup){
+                    let newGroup = new Group(msg.from)
+                    subjectGroup = newGroup
+                    indexOfSubjectGroup = groupPair.length
+                }
+                switch(command){
+                    // sekedar mengirimkan command yang tersedia untuk group
+                    case "h":
+                    case "help":
+                        client.sendMessage(
+                            msg.from,
 `command untuk group:
 => info-group
 => set-property-group
@@ -395,19 +397,19 @@ client.on("message", msg => {
 
 *gunakan flag(tambahkan) -h setelah nama command untuk melihat bantuan
 contoh : !info-group -h`
-                    )
-                    break
-                // mengirimkan informasi / data yang tersimpan di Group-pair.json untuk group pengirim
-                case "ig":
-                case "info-group":
-                    if(arg.includes("-h")){
-                        client.sendMessage(
-                            msg.from,
-                            "!info-group digunakan untuk mengirimkan informasi group yang di simpan oleh bot"
                         )
-                    } else{
-                        client.sendMessage(
-                            msg.from,
+                        break
+                    // mengirimkan informasi / data yang tersimpan di Group-pair.json untuk group pengirim
+                    case "ig":
+                    case "info-group":
+                        if(arg.includes("-h")){
+                            client.sendMessage(
+                                msg.from,
+                                "!info-group digunakan untuk mengirimkan informasi group yang di simpan oleh bot"
+                            )
+                        } else{
+                            client.sendMessage(
+                                msg.from,
 `*id group*         : ${subjectGroup.idGroup}
 namaGroup    : ${subjectGroup.namaGroup}
 timerSend      : ${padZero2Digit(subjectGroup.timerJamSend)}:${padZero2Digit(subjectGroup.timerMenitSend)}
@@ -416,17 +418,17 @@ statusTimer   : ${subjectGroup.timerState ? "On" : "Off"}
 *jumlah murid terdaftar* : ${subjectGroup.muridList.length}
 
 *yang di bold tidak dapat diganti/set lewat perintah`
-                        )
-                    }
-                    
-                    break
-                // melakukan sunting objek Group
-                case "spg":
-                case "set-property-group":
-                    
-                    if(arg.includes("-h")){
-                        client.sendMessage(
-                            msg.from,
+                            )
+                        }
+                        
+                        break
+                    // melakukan sunting objek Group
+                    case "spg":
+                    case "set-property-group":
+                        
+                        if(arg.includes("-h")){
+                            client.sendMessage(
+                                msg.from,
 `!${command} digunakan untuk melakukan sunting properti objek 'Group' di group ini
 properti yang bisa disunting antaralain:
 
@@ -450,30 +452,30 @@ contoh penggunaan:
 
 perintah serupa:
 !spg, !set-property-group` 
-                        )
-                    } else{
-                        let shrc = "subjectGroup"
-                        let [property, value] = arg.split(" ")
-                        console.log(`property: ${property}, value: ${value}`)
-                        if(arg.includes(":")){
-                            let [timerJam, timerMenit] = value.split(":")
-                            let type
-                            if(property == "timerSend"){
-                                type = "Send"
-                            } else if(property == "timerEnd"){
-                                type = "End"
-                            }
-                            eval(`[${shrc}.timerJam${type}, ${shrc}.timerMenit${type} ] = [${timerJam}, ${timerMenit}]`)
-                        } else if(["namaGroup", "timerState"].includes(property)){
-                            if(property == "namaGroup"){
-                                eval(`${shrc}.${property} = value`)
+                            )
+                        } else{
+                            let shrc = "subjectGroup"
+                            let [property, value] = arg.split(" ")
+                            console.log(`property: ${property}, value: ${value}`)
+                            if(arg.includes(":")){
+                                let [timerJam, timerMenit] = value.split(":")
+                                let type
+                                if(property == "timerSend"){
+                                    type = "Send"
+                                } else if(property == "timerEnd"){
+                                    type = "End"
+                                }
+                                eval(`[${shrc}.timerJam${type}, ${shrc}.timerMenit${type} ] = [${timerJam}, ${timerMenit}]`)
+                            } else if(["namaGroup", "timerState"].includes(property)){
+                                if(property == "namaGroup"){
+                                    eval(`${shrc}.${property} = value`)
+                                    
+                                } else{
+                                    eval(`${shrc}.${property} = (value === "true")`)
+                                }
                                 
-                            } else{
-                                eval(`${shrc}.${property} = (value === "true")`)
                             }
-                            
-                        }
-                        msg.reply(
+                            msg.reply(
 `properti ${property} telah disunting menjadi ${value}
 info-group:
 namaGroup    : ${subjectGroup.namaGroup}
@@ -481,17 +483,17 @@ timerSend      : ${padZero2Digit(subjectGroup.timerJamSend)}:${padZero2Digit(sub
 timerEnd        : ${padZero2Digit(subjectGroup.timerJamEnd)}:${padZero2Digit(subjectGroup.timerMenitEnd)}
 statusTimer   : ${subjectGroup.timerState ? "On" : "Off"}
 jumlah murid terdaftar : ${subjectGroup.muridList.length}`
-                        )
+                            )
+                            
+                        }
                         
-                    }
-                    
-                    break
-                case "sktp":
-                case "setktp" :
-                case "set-ktp":
-                    if(arg.includes("-h")){
-                        client.sendMessage(
-                            msg.from,
+                        break
+                    case "sktp":
+                    case "setktp" :
+                    case "set-ktp":
+                        if(arg.includes("-h")){
+                            client.sendMessage(
+                                msg.from,
 `!${command} (Kartu Tanda Pelajar) digunakan untuk mendaftar sekaligus menyunting properti objek Murid milik pengirim perintah
 properti yang bisa di sunting:
 nama    => "<string>"    menggunakan "", untuk set nama
@@ -506,291 +508,292 @@ contoh penggunaan:
 
 perintah serupa:
 !sktp, !setktp, !set-ktp`
-                        )
-                    } else {
-                        let property = arg.split(" ")[0]
-                        let index_murid
-                        let punya_ktp = false
+                            )
+                        } else {
+                            let property = arg.split(" ")[0]
+                            let index_murid
+                            let punya_ktp = false
 
-                        if(["nama", "noAbsen"].includes(property)){
-                            for(let [index, murid] of subjectGroup.muridList.entries()){
-                                if(murid.id == who){
-                                    punya_ktp = true
-                                    index_murid = index
+                            if(["nama", "noAbsen"].includes(property)){
+                                for(let [index, murid] of subjectGroup.muridList.entries()){
+                                    if(murid.id == who){
+                                        punya_ktp = true
+                                        index_murid = index
+                                    }
                                 }
-                            }
-                            if(!punya_ktp){
-                                let ktpBaru = new KTP(who)
-                                subjectGroup.muridList.push(ktpBaru)
-                                if(property == "nama"){
-                                    https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
-                                    subjectGroup.muridList.sort((a,b) => (a.nama > b.nama) ? 1 : ((b.nama > a.nama) ? -1 : 0))
-                                } else if(property == "noAbsen"){
-                                    subjectGroup.muridList.sort((a,b) => parseFloat(a.noAbsen) - parseFloat(b.noAbsen))
+                                if(!punya_ktp){
+                                    let ktpBaru = new KTP(who)
+                                    subjectGroup.muridList.push(ktpBaru)
+                                    if(property == "nama"){
+                                        https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
+                                        subjectGroup.muridList.sort((a,b) => (a.nama > b.nama) ? 1 : ((b.nama > a.nama) ? -1 : 0))
+                                    } else if(property == "noAbsen"){
+                                        subjectGroup.muridList.sort((a,b) => parseFloat(a.noAbsen) - parseFloat(b.noAbsen))
+                                    }
+                                    index_murid = subjectGroup.muridList.findIndex(x => x.id === who)
                                 }
-                                index_murid = subjectGroup.muridList.findIndex(x => x.id === who)
-                            }
-                            // https://stackoverflow.com/questions/12367126/how-can-i-get-a-substring-located-between-2-quotes
-                            // https://stackoverflow.com/questions/881085/count-the-number-of-occurrences-of-a-character-in-a-string-in-javascript
-                            let value = (arg.match(/"/g) || [].length == 2) ? arg.match(/"([^']+)"/)[1] : arg.split(" ")[1]
+                                // https://stackoverflow.com/questions/12367126/how-can-i-get-a-substring-located-between-2-quotes
+                                // https://stackoverflow.com/questions/881085/count-the-number-of-occurrences-of-a-character-in-a-string-in-javascript
+                                let value = (arg.match(/"/g) || [].length == 2) ? arg.match(/"([^']+)"/)[1] : arg.split(" ")[1]
 
-                            eval(`subjectGroup.muridList[${index_murid}].${property} = value`)
-                            msg.reply(
+                                eval(`subjectGroup.muridList[${index_murid}].${property} = value`)
+                                msg.reply(
 `properti ${property} telah disunting menjadi ${value}
 KTP mu:
 id             : ${subjectGroup.muridList[index_murid].id}
 nama       : ${subjectGroup.muridList[index_murid].nama}
 no absen : ${subjectGroup.muridList[index_murid].noAbsen}`
-                            )
-                            if(property == "nama"){
-                                subjectGroup.muridList.sort((a,b) => parseFloat(a.noAbsen) - parseFloat(b.noAbsen))
+                                )
+                                if(property == "nama"){
+                                    subjectGroup.muridList.sort((a,b) => parseFloat(a.noAbsen) - parseFloat(b.noAbsen))
+                                }
                             }
                         }
-                    }
-                    break
-                case "a":
-                case "absen":
-                    if(arg.includes("-h")){
-                        client.sendMessage(
-                            msg.from,
+                        break
+                    case "a":
+                    case "absen":
+                        if(arg.includes("-h")){
+                            client.sendMessage(
+                                msg.from,
 `!${command} digunakan untuk melakukan absen di absensi yang sedang berlangsun. Jika belum tolong lakukan 
 
 perintah serupa:
 !a, !absen`
-                        )
-                    } else{
-                        if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
-                            let listabsensi = READ(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`).split("\n")
-                            let adaMurid = false
-                            let indexMurid, lolos
-                            let text = ''
-                            for(let [index, murid] of subjectGroup.muridList.entries()){
-                                if(murid.id == who){
-                                    adaMurid = true
-                                    if(murid.nama != null && murid.noAbsen != null){
-                                        indexMurid = index
-                                        lolos = true
+                            )
+                        } else{
+                            if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
+                                let listabsensi = READ(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`).split("\n")
+                                let adaMurid = false
+                                let indexMurid, lolos
+                                let text = ''
+                                for(let [index, murid] of subjectGroup.muridList.entries()){
+                                    if(murid.id == who){
+                                        adaMurid = true
+                                        if(murid.nama != null && murid.noAbsen != null){
+                                            indexMurid = index
+                                            lolos = true
+                                        }
+                                        
+                                        break
                                     }
-                                    
-                                    break
                                 }
-                            }
-                            console.log(listabsensi)
-                            console.log(indexMurid)
-                            if(adaMurid && lolos){
-                                if(listabsensi[indexMurid + 3].endsWith("✅")){
-                                    msg.reply(
-                                        "anda sudah melakukan absen untuk hari ini"
-                                    )
+                                console.log(listabsensi)
+                                console.log(indexMurid)
+                                if(adaMurid && lolos){
+                                    if(listabsensi[indexMurid + 3].endsWith("✅")){
+                                        msg.reply(
+                                            "anda sudah melakukan absen untuk hari ini"
+                                        )
+                                    } else{
+                                        listabsensi[indexMurid + 3] = listabsensi[indexMurid + 3].concat("✅")
+                                        for(let x of listabsensi){
+                                            text = text.concat(`${x}\n`)
+                                        }
+                                        client.sendMessage(
+                                            msg.from,
+                                            text
+                                        )
+                                        WRITE(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`, text)
+                                    }
                                 } else{
-                                    listabsensi[indexMurid + 3] = listabsensi[indexMurid + 3].concat("✅")
-                                    for(let x of listabsensi){
-                                        text = text.concat(`${x}\n`)
-                                    }
-                                    client.sendMessage(
-                                        msg.from,
-                                        text
+                                    msg.reply(
+                                        "tolong lakukan !set-KTP nama dan noAbsen terlebih dahulu"
                                     )
-                                    WRITE(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`, text)
                                 }
+
                             } else{
                                 msg.reply(
-                                    "tolong lakukan !set-KTP nama dan noAbsen terlebih dahulu"
+                                    "belum ada absen yang diinisialisasi"
                                 )
                             }
-
-                        } else{
-                            msg.reply(
-                                "belum ada absen yang diinisialisasi"
-                            )
+                            
                         }
-                        
-                    }
-                    break
-                case "la":
-                case "liat-absen":
-                    if(arg.includes("-h")){
-                        msg.reply(
+                        break
+                    case "la":
+                    case "liat-absen":
+                        if(arg.includes("-h")){
+                            msg.reply(
 `!${command} digunakan untuk melihat absen yang sedang berlangsung. Berguna jika pengguna sudah melakukan absen
 
 perintah serupa:
 !la, !liat-absen`
-                        )
-                    } else{
-                        if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
-                            let text = READ(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
-                            client.sendMessage(
-                                msg.from,
-                                text
                             )
+                        } else{
+                            if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
+                                let text = READ(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
+                                client.sendMessage(
+                                    msg.from,
+                                    text
+                                )
 
-                        } else {
-                            msg.reply(
-                                "belum ada absen yang diinisialisasi"
-                            )
+                            } else {
+                                msg.reply(
+                                    "belum ada absen yang diinisialisasi"
+                                )
+                            }
                         }
-                    }
-                    break
-                case "liat-last-absen":
-                case "lihat-last-absen":
-                case "liat-absen-terakhir":
-                case "lihat-absen-terakhir":
-                case "lla":
-                case "lat":
-                    if(arg.includes("-h")){
-                        msg.reply(
+                        break
+                    case "liat-last-absen":
+                    case "lihat-last-absen":
+                    case "liat-absen-terakhir":
+                    case "lihat-absen-terakhir":
+                    case "lla":
+                    case "lat":
+                        if(arg.includes("-h")){
+                            msg.reply(
 `!${command} digunakan untuk melihat satu absen yang lalu. 
 
 perintah serupa:
 !liat-absen-terakhir, !lihat-absen-terakhir, !lat, !liat-last-absen, !lihat-last-absen, !lla`
-                        )
-                    } else{
-                        if(fs.existsSync(`${HIST_ABSEN_FILE_PATH}${subjectGroup.idGroup}/${subjectGroup.lastAbsenId}`)){
-                            let text = READ(`${HIST_ABSEN_FILE_PATH}${subjectGroup.idGroup}/${subjectGroup.lastAbsenId}`)
-                            client.sendMessage(
-                                msg.from,
-                                text
                             )
+                        } else{
+                            if(fs.existsSync(`${HIST_ABSEN_FILE_PATH}${subjectGroup.idGroup}/${subjectGroup.lastAbsenId}`)){
+                                let text = READ(`${HIST_ABSEN_FILE_PATH}${subjectGroup.idGroup}/${subjectGroup.lastAbsenId}`)
+                                client.sendMessage(
+                                    msg.from,
+                                    text
+                                )
 
-                        } else {
-                            msg.reply(
-                                "belum pernah ada absen atau belum pernah absen sama sekali"
-                            )
+                            } else {
+                                msg.reply(
+                                    "belum pernah ada absen atau belum pernah absen sama sekali"
+                                )
+                            }
                         }
-                    }
-                    break
+                        break
 
-                case "can":
-                case "create-absen-now":
-                case "create-absen":
-                case "ca":
-                case "cta":
-                case "create-temp-absen":
-                case "buat-absen":
-                case "buat-absensi":
-                case "ba":
-                    if(arg.includes("-h")){
-                        msg.reply(
+                    case "can":
+                    case "create-absen-now":
+                    case "create-absen":
+                    case "ca":
+                    case "cta":
+                    case "create-temp-absen":
+                    case "buat-absen":
+                    case "buat-absensi":
+                    case "ba":
+                        if(arg.includes("-h")){
+                            msg.reply(
 `!${command} digunakan untuk membuat absensi, murid yang membuat ktp setelah absen dikirim tidak akan muncul di absensi hingga absensi selanjutnya
 
 perintah serupa:
 !buat-absen, !buat-absensi, !ba, !create-absen, !create-absen-now, !ca, !can, !create-temp-absen, !cta`
-                        )
-                    } else{
-                        let text
-                        if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
-                            console.log("masuk ke sebelum execute moveTempAbsentoHistory")
-                            let lastAbsenId = moveTempAbsenToHistory(subjectGroup)
-                            subjectGroup.lastAbsenId = lastAbsenId
-                            text = fs.readFileSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
-                            msg.reply(
-                                `absen sebelum ini: \n${text}`
                             )
-                            console.log("setelah execute moveTempAbsentoHistory")
-                            fs.unlinkSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
+                        } else{
+                            let text
+                            if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
+                                console.log("masuk ke sebelum execute moveTempAbsentoHistory")
+                                let lastAbsenId = moveTempAbsenToHistory(subjectGroup)
+                                subjectGroup.lastAbsenId = lastAbsenId
+                                text = fs.readFileSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
+                                msg.reply(
+                                    `absen sebelum ini: \n${text}`
+                                )
+                                console.log("setelah execute moveTempAbsentoHistory")
+                                fs.unlinkSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
+                            }
+                            [text, subjectGroup.liveAbsenId] = createAbsen(subjectGroup)
+                            client.sendMessage(
+                                msg.from,
+                                text
+                            )
                         }
-                        [text, subjectGroup.liveAbsenId] = createAbsen(subjectGroup)
-                        client.sendMessage(
-                            msg.from,
-                            text
-                        )
-                    }
-                    break
-                case "e":
-                case "ea":
-                case "end-absen":
-                case "end":
-                    if(arg.includes("-h")){
-                        msg.reply(
+                        break
+                    case "e":
+                    case "ea":
+                    case "end-absen":
+                    case "end":
+                        if(arg.includes("-h")){
+                            msg.reply(
 `!${command} digunakan untuk mengakhiri absen yang sedang berlangsung
 
 perintah serupa:
 !e, !ea, !end-absen, !end`
-                        )
-                    } else{
-                        if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
-                            console.log("masuk ke sebelum execute moveTempAbsentoHistory")
-                            let lastAbsenId = moveTempAbsenToHistory(subjectGroup)
-                            subjectGroup.lastAbsenId = lastAbsenId
-                            text = fs.readFileSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
-                            msg.reply(
-                                `absen ditutup: \n${text}`
                             )
-                            console.log("setelah execute moveTempAbsentoHistory")
-                            fs.unlinkSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
                         } else{
-                            msg.reply(
-                                "beluma ada absensi yang di inisialisasi"
-                            )
+                            if(fs.existsSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)){
+                                console.log("masuk ke sebelum execute moveTempAbsentoHistory")
+                                let lastAbsenId = moveTempAbsenToHistory(subjectGroup)
+                                subjectGroup.lastAbsenId = lastAbsenId
+                                text = fs.readFileSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
+                                msg.reply(
+                                    `absen ditutup: \n${text}`
+                                )
+                                console.log("setelah execute moveTempAbsentoHistory")
+                                fs.unlinkSync(`${TEMP_ABSEN_FILE_PATH}${subjectGroup.liveAbsenId}`)
+                            } else{
+                                msg.reply(
+                                    "beluma ada absensi yang di inisialisasi"
+                                )
+                            }
                         }
-                    }
-                    break
+                        break
 
-                case "lm":
-                case "liat-murid":
-                case "lihat-murid":
-                    if(arg.includes("-h")){
-                        msg.reply(
+                    case "lm":
+                    case "liat-murid":
+                    case "lihat-murid":
+                        if(arg.includes("-h")){
+                            msg.reply(
 `!${command} digunakan untuk melihat list murid yang terdaftar di group dengan !set-ktp
 
 gunakan flag -o untuk menampilkan penuh dalam bentuk JSON
 
 perintah serupa:
 !liat-murid, !lihat-murid, !lm`
-                        )
-                    } else{
-                        if(subjectGroup.muridList.length == 0){
+                            )
+                        } else{
+                            if(subjectGroup.muridList.length == 0){
+                                client.sendMessage(
+                                    msg.from,
+                                    "belum ada yang mendaftar"
+                                )
+                                break
+                            }
+
+                            let text = ''
+                            if(arg.includes("-o")){ 
+                                for(let murid of subjectGroup.muridList){
+                                    text = text.concat(`${murid}\n`)
+                                }
+
+                            } else{
+                                for(let murid of subjectGroup.muridList){
+                                    text = text.concat(`${murid.noAbsen}. ${murid.nama}\n`)
+                                }
+                            }
                             client.sendMessage(
                                 msg.from,
-                                "belum ada yang mendaftar"
+                                text
                             )
-                            break
                         }
-
-                        let text = ''
-                        if(arg.includes("-o")){ 
-                            for(let murid of subjectGroup.muridList){
-                                text = text.concat(`${murid}\n`)
-                            }
-
-                        } else{
-                            for(let murid of subjectGroup.muridList){
-                                text = text.concat(`${murid.noAbsen}. ${murid.nama}\n`)
-                            }
-                        }
-                        client.sendMessage(
-                            msg.from,
-                            text
+                        break
+                    case "scl":
+                    case "source-code-link":
+                        msg.reply(
+                            "https://github.com/Reylyer/WaBotAbsen"
                         )
-                    }
-                    break
-                case "scl":
-                case "source-code-link":
-                    msg.reply(
-                        "https://github.com/Reylyer/WaBotAbsen"
-                    )
 
-                default:
+                    default:
 
 
+                    
+                }
                 
+                // SAVE STATE Group-pair.json
+                if(subjectGroup.timerState && !subjectGroup.running){
+                    subjectGroup.running = true
+                    isTimeToSend(indexOfSubjectGroup)
+                    isTimeToEnd(indexOfSubjectGroup)
+                }
+                if(subjectGroup.timerState == false){
+                    subjectGroup.running = false
+                }
+                groupPair[indexOfSubjectGroup] = subjectGroup
+                WRITE(GROUP_PAIR_FILE_PATH, JSON.stringify(groupPair))
+                
+            } else {
+                // PC/DM SPECIFIC COMMAND
+                who = msg.from
             }
-            
-            // SAVE STATE Group-pair.json
-            if(subjectGroup.timerState && !subjectGroup.running){
-                subjectGroup.running = true
-                isTimeToSend(indexOfSubjectGroup)
-                isTimeToEnd(indexOfSubjectGroup)
-            }
-            if(subjectGroup.timerState == false){
-                subjectGroup.running = false
-            }
-            groupPair[indexOfSubjectGroup] = subjectGroup
-            WRITE(GROUP_PAIR_FILE_PATH, JSON.stringify(groupPair))
-            
-        } else {
-            // PC/DM SPECIFIC COMMAND
-            who = msg.from
         }
     } 
         
