@@ -1,4 +1,3 @@
-
 const fs = require("fs")
 const mkdirp = require("mkdirp")
 const { Client } = require("whatsapp-web.js");
@@ -31,7 +30,6 @@ if(!fs.existsSync("rsc/Absen-folder/History")){
 const client = new Client({
     session: sessiondata
 });
-
 
 client.on("authenticated", (session) => {
     sessiondata = session;
