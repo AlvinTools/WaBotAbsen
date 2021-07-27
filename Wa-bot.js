@@ -455,7 +455,9 @@ perintah serupa:
                             )
                         } else{
                             let shrc = "subjectGroup"
-                            let [property, value] = arg.split(" ")
+                            let indexOfSpaceArg = arg.includes(" ") ? arg.indexOf(" ") : arg.length
+                            let [property, value] = [arg.slice(0, indexOfSpaceArg), arg.slice(indexOfSpaceArg + 1, arg.length)]
+                            console.log(`property = ${property}, value = ${value}`)
                             console.log(`property: ${property}, value: ${value}`)
                             if(arg.includes(":")){
                                 let [timerJam, timerMenit] = value.split(":")
@@ -496,11 +498,11 @@ jumlah murid terdaftar : ${subjectGroup.muridList.length}`
                                 msg.from,
 `!${command} (Kartu Tanda Pelajar) digunakan untuk mendaftar sekaligus menyunting properti objek Murid milik pengirim perintah
 properti yang bisa di sunting:
-nama    => "<string>"    menggunakan "", untuk set nama
+nama    => <string>    untuk set nama
 noAbsen =>  <number>      untuk set nomor absen
 
 contoh penggunaan:
-!set-KTP nama "Shariyl Cross"
+!set-KTP nama Shariyl Cross
 !set-KTP noAbsen 69
 
 *belum bisa langsung sekaligus harus melakukan !set-KTP dua kali
@@ -510,7 +512,9 @@ perintah serupa:
 !sktp, !setktp, !set-ktp`
                             )
                         } else {
-                            let property = arg.split(" ")[0]
+                            let indexOfSpaceArg = arg.includes(" ") ? arg.indexOf(" ") : arg.length
+                            let [property, value] = [arg.slice(0, indexOfSpaceArg), arg.slice(indexOfSpaceArg + 1, arg.length)]
+                            console.log(`property = ${property}, value = ${value}`)
                             let index_murid
                             let punya_ktp = false
 
@@ -524,19 +528,23 @@ perintah serupa:
                                 if(!punya_ktp){
                                     let ktpBaru = new KTP(who)
                                     subjectGroup.muridList.push(ktpBaru)
-                                    if(property == "nama"){
-                                        https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
-                                        subjectGroup.muridList.sort((a,b) => (a.nama > b.nama) ? 1 : ((b.nama > a.nama) ? -1 : 0))
-                                    } else if(property == "noAbsen"){
-                                        subjectGroup.muridList.sort((a,b) => parseFloat(a.noAbsen) - parseFloat(b.noAbsen))
-                                    }
-                                    index_murid = subjectGroup.muridList.findIndex(x => x.id === who)
+                                    indexMurid = subjectGroup.muridList.length - 1
+                                    // if(property == "nama"){
+                                    //     https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
+                                    //     subjectGroup.muridList.sort((a,b) => (a.nama > b.nama) ? 1 : ((b.nama > a.nama) ? -1 : 0))
+                                    // } else if(property == "noAbsen"){
+                                    //     subjectGroup.muridList.sort((a,b) => parseFloat(a.noAbsen) - parseFloat(b.noAbsen))
+                                    // }
+                                    // index_murid = subjectGroup.muridList.findIndex(x => x.id === who)
                                 }
                                 // https://stackoverflow.com/questions/12367126/how-can-i-get-a-substring-located-between-2-quotes
                                 // https://stackoverflow.com/questions/881085/count-the-number-of-occurrences-of-a-character-in-a-string-in-javascript
-                                let value = (arg.match(/"/g) || [].length == 2) ? arg.match(/"([^']+)"/)[1] : arg.split(" ")[1]
-
+                                // let value = (arg.match(/"/g) || [].length == 2) ? arg.match(/"([^']+)"/)[1] : arg.split(" ")[1]
                                 eval(`subjectGroup.muridList[${index_murid}].${property} = value`)
+                                if(property == "noAbsen"){
+                                    subjectGroup.muridList.sort((a,b) => parseFloat(a.noAbsen) - parseFloat(b.noAbsen))
+                                }
+
                                 msg.reply(
 `properti ${property} telah disunting menjadi ${value}
 KTP mu:
