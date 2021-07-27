@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "mkdirp": "^1.0.4",
     "mysql": "^2.18.1",
     "whatsapp-web.js": "^1.13.2"
   }
