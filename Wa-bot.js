@@ -1,4 +1,3 @@
-
 const fs = require("fs")
 const mkdirp = require("mkdirp")
 const { Client } = require("whatsapp-web.js");
@@ -12,9 +11,6 @@ const HIST_ABSEN_FILE_PATH = "./rsc/Absen-folder/History/"
 const CPREFIX = "!";
 
 let sessiondata;
-
-
-
 
 if(fs.existsSync(SESSION_FILE_PATH)){
     console.log("session route")
